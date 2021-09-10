@@ -1,4 +1,4 @@
-package be.t_ars.ur.solver
+package be.t_ars.ur.player
 
 import be.t_ars.ur.EPlayer
 import be.t_ars.ur.Loc
@@ -59,8 +59,8 @@ class FinishTest {
     }
 
     private fun doTest(expectedGameState: Long, initialGameState: Long, player: EPlayer, x: Int, y: Int) {
-        val actualGameState = finishPiece(initialGameState, player, Loc(x, y))
-        printGameState(actualGameState)
+        val actualGameState = initialGameState.finishPiece(player, Loc(x, y))
+        actualGameState.printGameState()
         Assertions.assertEquals(expectedGameState, actualGameState)
     }
 }

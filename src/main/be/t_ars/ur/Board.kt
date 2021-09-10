@@ -21,9 +21,9 @@ val EYE_COUNT = arrayOf(
     1, 2, 2, 3,
     1, 2, 2, 3, 2, 3, 3, 4
 )
-
+private val rollRandom = Random(System.currentTimeMillis())
 fun nextRoll() =
-    EYE_COUNT[(Random.nextFloat() * 16F).toInt()]
+    EYE_COUNT[rollRandom.nextInt(16)]
 
 class Board {
     val state = Array(3) {

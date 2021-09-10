@@ -1,5 +1,5 @@
 package be.t_ars.ur
 
-interface ISolver {
+interface IPlayer {
     fun getNextMove(board: Board, stepCount: Int): Loc?
 }

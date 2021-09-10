@@ -2,15 +2,11 @@ package be.t_ars.ur.ui
 
 import be.t_ars.ur.Board
 import be.t_ars.ur.EPlayer
-import be.t_ars.ur.nextRoll
-import be.t_ars.ur.solver.DummySolver
 import java.awt.BorderLayout
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
-import kotlin.math.roundToInt
-import kotlin.random.Random
 import kotlin.system.exitProcess
 
 class MainFrame(board: Board) : JFrame() {

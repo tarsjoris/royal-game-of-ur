@@ -1,8 +1,8 @@
-package be.t_ars.ur.solver
+package be.t_ars.ur.player
 
 import be.t_ars.ur.*
 
-class DummySolver(private val player: EPlayer) : ISolver {
+class DummyPlayer(private val player: EPlayer) : IPlayer {
     private val path = Board.PATHS[player.index]
 
     override fun getNextMove(board: Board, stepCount: Int): Loc? {
