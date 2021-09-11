@@ -5,6 +5,9 @@ import be.t_ars.ur.*
 class DummyPlayer(private val player: EPlayer) : IPlayer {
     private val path = Board.PATHS[player.index]
 
+    override fun getName() =
+        "Dummy"
+
     override fun getNextMove(board: Board, stepCount: Int): Loc? {
         for (fromPos in path.size - stepCount downTo 0) {
             val fromLoc = path[fromPos]

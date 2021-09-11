@@ -8,6 +8,9 @@ private val playerRandom = Random(System.currentTimeMillis())
 class RandomPlayer(private val player: EPlayer) : IPlayer {
     private val path = Board.PATHS[player.index]
 
+    override fun getName() =
+        "Random"
+
     override fun getNextMove(board: Board, stepCount: Int): Loc? {
         val moves = mutableListOf<Loc>()
         for (fromPos in path.size - stepCount downTo 0) {
@@ -16,7 +19,7 @@ class RandomPlayer(private val player: EPlayer) : IPlayer {
                 val toPos = fromPos + stepCount
                 if (toPos == path.size) {
                     // finish
-                    return fromLoc
+                    moves.add(fromLoc)
                 } else {
                     val toLoc = path[toPos]
                     val toBox = board.state[toLoc.y][toLoc.x]

@@ -1,7 +1,18 @@
 package be.t_ars.ur.player
 
-import be.t_ars.ur.*
+import be.t_ars.ur.Board
+import be.t_ars.ur.EPlayer
+import be.t_ars.ur.IPlayer
+import be.t_ars.ur.Loc
 
+
+class MiniMaxPlayer(private val player: EPlayer) : IPlayer {
+    override fun getName() =
+        "MiniMax"
+
+    override fun getNextMove(board: Board, stepCount: Int) =
+        getBestMove(createGameState(board), player, stepCount, 5)
+}
 
 private val CHANCES = mapOf(
     Pair(0, 1.toFloat() / 16.toFloat()),
@@ -70,47 +81,46 @@ private fun getBestScore(gameState: GameState, player: EPlayer, stepCount: Int, 
     return bestScore
 }
 
-fun doBestMove(gameState: GameState, player: EPlayer, stepCount: Int, depth: Int): GameState? {
+private fun getBestMove(gameState: GameState, player: EPlayer, stepCount: Int, depth: Int): Loc? {
     val path = Board.PATHS[player.index]
-    var bestGameState: GameState? = null
+    var bestMove: Loc? = null
     var bestScore = if (player == EPlayer.A) Int.MIN_VALUE else Int.MAX_VALUE
 
+    // introduce piece
     val newPieceLoc = path[stepCount - 1]
     if (gameState.isValidTarget(player, newPieceLoc)) {
         val newPieceGameState = gameState.introducePiece(player, newPieceLoc)
         val newPieceScore = getScore(newPieceGameState, player, depth)
         if (isScoreBetter(player, newPieceScore, bestScore)) {
             bestScore = newPieceScore
-            bestGameState = newPieceGameState
+            bestMove = Board.START_LOC
         }
     }
+
     for (i in 0..(path.size - stepCount)) {
         val movePieceFrom = path[i]
         if (gameState.getBox(movePieceFrom) == player) {
             if (i + stepCount < path.size) {
+                // move piece
                 val movePieceTo = path[i + stepCount]
                 if (gameState.isValidTarget(player, movePieceTo)) {
                     val movePieceGameState = gameState.movePiece(player, movePieceFrom, movePieceTo)
                     val movePieceScore = getScore(movePieceGameState, player, depth)
                     if (isScoreBetter(player, movePieceScore, bestScore)) {
                         bestScore = movePieceScore
-                        bestGameState = movePieceGameState
+                        bestMove = movePieceFrom
                     }
                 }
             } else {
+                // finish piece
                 val finishPieceGameState = gameState.finishPiece(player, movePieceFrom)
                 val finishPieceScore = getScore(finishPieceGameState, player, depth)
                 if (isScoreBetter(player, finishPieceScore, bestScore)) {
                     bestScore = finishPieceScore
-                    bestGameState = finishPieceGameState
+                    bestMove = movePieceFrom
                 }
             }
         }
     }
-    return bestGameState
-}
-
-fun main() {
-    val newGameState = doBestMove(INITIAL_GAME_STATE, EPlayer.A, 5, 10)
-    newGameState?.printGameState() ?: println("No best move found")
+    return bestMove
 }
