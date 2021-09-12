@@ -27,18 +27,18 @@ fun createGameState(board: Board): GameState {
         val row = board.state[y]
         for (x in row.indices) {
             val box = row[x]
-            if (box != EPlayer.E) {
+            if (box != null) {
                 gameState = gameState.setBox(box, Loc(x, y))
             }
         }
     }
-    for (player in arrayOf(EPlayer.A, EPlayer.B)) {
+    for (player in EPlayer.values()) {
         val available = board.available[player.index]
         val availableOffset = getUnusedCounterOffset(player)
         gameState = gameState and (7L shl availableOffset).inv()
         gameState = gameState or (available.toLong() shl availableOffset)
 
-        val finished = board.available[player.index]
+        val finished = board.finished[player.index]
         val finishedOffset = getFinishedCounterOffset(player)
         gameState = gameState and (7L shl finishedOffset).inv()
         gameState = gameState or (finished.toLong() shl finishedOffset)
@@ -46,12 +46,12 @@ fun createGameState(board: Board): GameState {
     return gameState
 }
 
-fun GameState.getBox(loc: Loc): EPlayer {
+fun GameState.getBox(loc: Loc): EPlayer? {
     val offset = (loc.y * COLUMNS + loc.x) * 2
     return if (isSet(offset))
         if (isSet(offset + 1)) EPlayer.B else EPlayer.A
     else
-        EPlayer.E
+        null
 }
 
 fun GameState.getUnusedCount(player: EPlayer): Int {
@@ -66,7 +66,7 @@ fun GameState.getFinishedCount(player: EPlayer): Int {
 
 fun GameState.isValidTarget(player: EPlayer, target: Loc): Boolean {
     val currentToBox = getBox(target)
-    return currentToBox != player && (currentToBox == EPlayer.E || !isMagicBox(target))
+    return currentToBox != player && (currentToBox == null || !isMagicBox(target))
 }
 
 
@@ -76,7 +76,7 @@ fun GameState.introducePiece(player: EPlayer, loc: Loc): GameState {
 
     val stateWithBox = setBox(player, loc)
     val stateWithUnusedCounter = stateWithBox.decrement(getUnusedCounterOffset(player))
-    return if (oldBox != EPlayer.E) stateWithUnusedCounter.capture(oldBox) else stateWithUnusedCounter
+    return if (oldBox != null) stateWithUnusedCounter.capture(oldBox) else stateWithUnusedCounter
 }
 
 fun GameState.movePiece(player: EPlayer, from: Loc, to: Loc): GameState {
@@ -85,7 +85,7 @@ fun GameState.movePiece(player: EPlayer, from: Loc, to: Loc): GameState {
 
     val stateWithRemovedBox = clearBox(from)
     val stateWithMovedBox = stateWithRemovedBox.setBox(player, to)
-    return if (oldBox != EPlayer.E) stateWithMovedBox.capture(oldBox) else stateWithMovedBox
+    return if (oldBox != null) stateWithMovedBox.capture(oldBox) else stateWithMovedBox
 }
 
 

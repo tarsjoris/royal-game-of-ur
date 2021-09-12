@@ -64,7 +64,7 @@ class BoardPanel(private val board: Board) : JPanel() {
             val row = board.state[y]
             for (x in row.indices) {
                 val state = row[x]
-                if (state != EPlayer.E) {
+                if (state != null) {
                     g.color = PLAYER_COLOR[state.index]
                     g.drawString(
                         state.label,

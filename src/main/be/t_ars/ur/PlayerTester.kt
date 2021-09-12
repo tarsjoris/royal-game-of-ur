@@ -25,7 +25,7 @@ private fun runGame(playerA: IPlayer, playerB: IPlayer): EPlayer {
             landedOnStar = when (loc) {
                 Board.START_LOC -> board.introducePiece(currentPlayer, stepCount)
                 null -> false
-                else -> board.move(currentPlayer, loc, stepCount)
+                else -> board.movePiece(currentPlayer, loc, stepCount)
             }
         } else {
             landedOnStar = false

@@ -1,6 +1,7 @@
 package be.t_ars.ur
 
 import be.t_ars.ur.player.DummyPlayer
+import be.t_ars.ur.player.MiniMaxPlayer
 import be.t_ars.ur.player.RandomPlayer
 import be.t_ars.ur.ui.MainFrame
 
@@ -29,8 +30,8 @@ private fun playGameOnBoard(playerA: IPlayer, playerB: IPlayer) {
             val loc = players[currentPlayer.index].getNextMove(board, stepCount)
             landedOnStar = when (loc) {
                 Board.START_LOC -> board.introducePiece(currentPlayer, stepCount)
-                null -> false
-                else -> board.move(currentPlayer, loc, stepCount)
+                null -> board.skipTurn(currentPlayer, stepCount)
+                else -> board.movePiece(currentPlayer, loc, stepCount)
             }
             mainFrame.update()
         } else {
@@ -41,7 +42,7 @@ private fun playGameOnBoard(playerA: IPlayer, playerB: IPlayer) {
         }
     }
 
-    arrayOf(EPlayer.A, EPlayer.B)
+    EPlayer.values()
         .forEach { player ->
             println("Dice rolls of player ${player.name}")
             throws[player.index]
@@ -53,5 +54,8 @@ private fun playGameOnBoard(playerA: IPlayer, playerB: IPlayer) {
 
 fun main() {
     //playGameOnBoard(RandomPlayer(EPlayer.A), DummyPlayer(EPlayer.B))
-    testBestPlayer(RandomPlayer(EPlayer.A), DummyPlayer(EPlayer.B))
+    playGameOnBoard(MiniMaxPlayer(EPlayer.A), DummyPlayer(EPlayer.B))
+
+    //testBestPlayer(RandomPlayer(EPlayer.A), DummyPlayer(EPlayer.B))
+    //testBestPlayer(MiniMaxPlayer(EPlayer.A), DummyPlayer(EPlayer.B))
 }

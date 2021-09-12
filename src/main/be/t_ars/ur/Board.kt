@@ -9,9 +9,16 @@ enum class EBox {
 }
 
 enum class EPlayer(val index: Int, val label: String) {
-    E(-1, ""), // Empty
     A(0, "A"),
-    B(1, "B"),
+    B(1, "B");
+
+    override fun toString() =
+        label
+}
+
+class Loc(val x: Int, val y: Int) {
+    override fun toString() =
+        "($x, $y)"
 }
 
 val EYE_COUNT = arrayOf(
@@ -21,76 +28,109 @@ val EYE_COUNT = arrayOf(
     1, 2, 2, 3,
     1, 2, 2, 3, 2, 3, 3, 4
 )
+
 private val rollRandom = Random(System.currentTimeMillis())
+
 fun nextRoll() =
     EYE_COUNT[rollRandom.nextInt(16)]
 
+class InvalidMoveException(message: String) : Exception(message)
+
 class Board {
-    val state = Array(3) {
+    val state: Array<Array<EPlayer?>> = Array(3) {
         Array(8) {
-            EPlayer.E
+            null
         }
     }
     var available = arrayOf(PIECES, PIECES)
     var finished = arrayOf(0, 0)
     var winner: EPlayer? = null
 
-    fun introducePiece(player: EPlayer, steps: Int) =
-        move(player, START_LOC, steps)
+    fun skipTurn(player: EPlayer, steps: Int): Boolean {
+        val otherPlayer = if (player == EPlayer.A) EPlayer.B else EPlayer.A
+        val path = PATHS[player.index]
+        if (available[player.index] > 0) {
+            val toIndexInPath = steps - 1
+            assert(toIndexInPath in path.indices)
+            val toLoc = path[toIndexInPath]
+            if (state[toLoc.y][toLoc.x] == null) throw InvalidMoveException("Not allowed to skip because a new piece can be introduced")
+        }
+        for (fromIndexInPath in path.indices) {
+            val fromLoc = path[fromIndexInPath]
+            if (state[fromLoc.y][fromLoc.x] == player) {
+                val toIndexInPath = fromIndexInPath + steps
+                if (toIndexInPath in path.indices) {
+                    val toLoc = path[toIndexInPath]
+                    val toState = state[toLoc.y][toLoc.x]
+                    if (toState == null || (toState == otherPlayer && BOXES[toLoc.y][toLoc.x] != EBox.S))
+                        throw InvalidMoveException("Not allowed to skip because the piece at $fromLoc can be moved")
+                }
+            }
+        }
+        return false
+    }
+
+    fun introducePiece(player: EPlayer, steps: Int): Boolean {
+        val path = PATHS[player.index]
+        val toIndexInPath = steps - 1
+        assert(toIndexInPath in path.indices)
+        val toLoc = path[toIndexInPath]
+        val toBox = BOXES[toLoc.y][toLoc.x]
+        assert(toBox != EBox.V)
+        if (state[toLoc.y][toLoc.x] != null) throw InvalidMoveException("Can't introduce piece at $toLoc because it is occupied by ${state[toLoc.y][toLoc.x]}")
+
+        --available[player.index]
+        state[toLoc.y][toLoc.x] = player
+        return toBox == EBox.S
+    }
 
     /**
      * @return true when landed on a star
      */
-    fun move(player: EPlayer, fromLoc: Loc, steps: Int): Boolean {
+    fun movePiece(player: EPlayer, fromLoc: Loc, steps: Int): Boolean {
         val otherPlayer = if (player == EPlayer.A) EPlayer.B else EPlayer.A
         val path = PATHS[player.index]
-        if (fromLoc == START_LOC) {
-            // introduce piece
-            val toPosInPath = steps - 1
-            assert(toPosInPath in path.indices)
-            val toPos = path[toPosInPath]
-            val toBox = BOXES[toPos.y][toPos.x]
-            assert(toBox != EBox.V)
-            val toState = state[toPos.y][toPos.x]
-            assert(toState == EPlayer.E)
-
-            --available[player.index]
-            state[toPos.y][toPos.x] = player
-            return toBox == EBox.S
-        } else {
-            assert(fromLoc.x in 0 until WIDTH)
-            assert(fromLoc.y in 0 until HEIGHT)
-            assert(state[fromLoc.y][fromLoc.x] == player)
-            val fromPosInPath = POS_IN_PATH[fromLoc.y][fromLoc.x]
-            assert(fromPosInPath != null)
-            if (fromPosInPath != null) {
-                val fromPos = path[fromPosInPath]
-                assert(fromPos.x == fromLoc.x)
-                assert(fromPos.y == fromLoc.y)
-                val toPosInPath = fromPosInPath + steps
-                if (toPosInPath == path.size) {
-                    // finish
-                    state[fromLoc.y][fromLoc.x] = EPlayer.E
-                    if (++finished[player.index] == PIECES) {
-                        winner = player
-                    }
-                } else {
-                    // plain move
-                    assert(toPosInPath in path.indices)
-                    val toPos = path[toPosInPath]
-                    val toBox = BOXES[toPos.y][toPos.x]
-                    assert(toBox != EBox.V)
-                    val toState = state[toPos.y][toPos.x]
-                    assert(toState == EPlayer.E || (toState == otherPlayer && toBox != EBox.S))
-
-                    state[fromLoc.y][fromLoc.x] = EPlayer.E
-                    if (toState == otherPlayer) {
-                        ++available[otherPlayer.index]
-                    }
-                    state[toPos.y][toPos.x] = player
-                    return toBox == EBox.S
-                }
+        if (fromLoc.x !in 0 until WIDTH || fromLoc.y !in 0 until HEIGHT) {
+            throw InvalidMoveException("Can't move piece at $fromLoc because it is off the board")
+        }
+        val fromIndexInPath = POS_IN_PATH[fromLoc.y][fromLoc.x]
+            ?: throw InvalidMoveException("Can't move piece at $fromLoc because it is off the board")
+        if (state[fromLoc.y][fromLoc.x] != player) {
+            if (state[fromLoc.y][fromLoc.x] == null) {
+                throw InvalidMoveException("There is no piece to move at $fromLoc")
+            } else {
+                throw InvalidMoveException("Can't move piece at $fromLoc because it belongs to the other player ($otherPlayer)")
             }
+        }
+
+        val fromPos = path[fromIndexInPath]
+        assert(fromPos.x == fromLoc.x)
+        assert(fromPos.y == fromLoc.y)
+        val toIndexInPath = fromIndexInPath + steps
+        if (toIndexInPath == path.size) {
+            // finish
+            state[fromLoc.y][fromLoc.x] = null
+            if (++finished[player.index] == PIECES) {
+                winner = player
+            }
+        } else {
+            // plain move
+            if (toIndexInPath !in path.indices) throw InvalidMoveException("Can't move piece at $fromLoc because it can't do $steps steps")
+            val toLoc = path[toIndexInPath]
+            val toBox = BOXES[toLoc.y][toLoc.x]
+            assert(toBox != EBox.V)
+            val toState = state[toLoc.y][toLoc.x]
+            if (toState == player)
+                throw InvalidMoveException("Can't move piece to $toLoc because it is occupied by the same player")
+            if (toState == otherPlayer && toBox == EBox.S)
+                throw InvalidMoveException("Can't move piece to $toLoc because it is protected")
+
+            state[fromLoc.y][fromLoc.x] = null
+            if (toState == otherPlayer) {
+                ++available[otherPlayer.index]
+            }
+            state[toLoc.y][toLoc.x] = player
+            return toBox == EBox.S
         }
         return false
     }

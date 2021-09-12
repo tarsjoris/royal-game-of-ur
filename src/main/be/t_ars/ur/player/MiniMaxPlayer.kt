@@ -31,9 +31,8 @@ private fun getScore(gameState: GameState, player: EPlayer, depth: Int): Int {
     }
 
     val otherPlayer = if (player == EPlayer.A) EPlayer.B else EPlayer.A
-    return CHANCES.map { chance ->
-        getBestScore(gameState, otherPlayer, chance.key, depth - 1) * chance.value
-    }
+    return CHANCES
+        .map { chance -> getBestScore(gameState, otherPlayer, chance.key, depth - 1) * chance.value }
         .sum()
         .toInt()
 }
@@ -82,6 +81,7 @@ private fun getBestScore(gameState: GameState, player: EPlayer, stepCount: Int, 
 }
 
 private fun getBestMove(gameState: GameState, player: EPlayer, stepCount: Int, depth: Int): Loc? {
+    gameState.printGameState()
     val path = Board.PATHS[player.index]
     var bestMove: Loc? = null
     var bestScore = if (player == EPlayer.A) Int.MIN_VALUE else Int.MAX_VALUE
