@@ -5,7 +5,10 @@ private const val NUMBER_OF_GAMES = 10000
 fun testBestPlayer(playerA: IPlayer, playerB: IPlayer): EPlayer {
     val wins = Array(2) { 0 }
     for (i in 1..NUMBER_OF_GAMES) {
-        ++wins[runGame(playerA, playerB).index]
+        val winner = runGame(playerA, playerB)
+        ++wins[winner.index]
+        print(winner.label)
+        if (i.mod(100) == 0) println()
     }
     println("Player ${playerA.getName()} won ${wins[EPlayer.A.index]} games.")
     println("Player ${playerB.getName()} won ${wins[EPlayer.B.index]} games.")

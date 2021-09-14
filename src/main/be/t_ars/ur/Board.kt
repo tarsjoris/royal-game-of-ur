@@ -12,11 +12,14 @@ enum class EPlayer(val index: Int, val label: String) {
     A(0, "A"),
     B(1, "B");
 
+    fun otherPlayer() =
+        if (this == A) B else A
+
     override fun toString() =
         label
 }
 
-class Loc(val x: Int, val y: Int) {
+data class Loc(val x: Int, val y: Int) {
     override fun toString() =
         "($x, $y)"
 }
@@ -47,7 +50,7 @@ class Board {
     var winner: EPlayer? = null
 
     fun skipTurn(player: EPlayer, steps: Int): Boolean {
-        val otherPlayer = if (player == EPlayer.A) EPlayer.B else EPlayer.A
+        val otherPlayer = player.otherPlayer()
         val path = PATHS[player.index]
         if (available[player.index] > 0) {
             val toIndexInPath = steps - 1
@@ -88,7 +91,7 @@ class Board {
      * @return true when landed on a star
      */
     fun movePiece(player: EPlayer, fromLoc: Loc, steps: Int): Boolean {
-        val otherPlayer = if (player == EPlayer.A) EPlayer.B else EPlayer.A
+        val otherPlayer = player.otherPlayer()
         val path = PATHS[player.index]
         if (fromLoc.x !in 0 until WIDTH || fromLoc.y !in 0 until HEIGHT) {
             throw InvalidMoveException("Can't move piece at $fromLoc because it is off the board")

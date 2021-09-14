@@ -6,7 +6,6 @@ import be.t_ars.ur.Loc
 
 const val COLUMNS = 8
 const val ROWS = 3
-const val PIECE_COUNT = 7
 private const val COUNTER_OFFSET = COLUMNS * ROWS * 2
 private const val COUNTER_BITS = 3
 
@@ -15,8 +14,8 @@ const val INITIAL_GAME_STATE = 63L shl COUNTER_OFFSET // 2 times 3 bits set
 typealias GameState = Long
 
 fun isMagicBox(loc: Loc) =
-    (loc.x == 0 || loc.x == 6) && (loc.y == 0 || loc.y == 2) ||
-            loc.x == 3 && loc.y == 1
+    ((loc.x == 0 || loc.x == 6) && (loc.y == 0 || loc.y == 2)) ||
+            (loc.x == 3 && loc.y == 1)
 
 fun isValidBox(loc: Loc) =
     loc.y == 1 || (loc.x != 4 && loc.x != 5)
@@ -48,10 +47,11 @@ fun createGameState(board: Board): GameState {
 
 fun GameState.getBox(loc: Loc): EPlayer? {
     val offset = (loc.y * COLUMNS + loc.x) * 2
-    return if (isSet(offset))
-        if (isSet(offset + 1)) EPlayer.B else EPlayer.A
-    else
-        null
+    return when {
+        isSet(offset) -> EPlayer.A
+        isSet(offset + 1) -> EPlayer.B
+        else -> null
+    }
 }
 
 fun GameState.getUnusedCount(player: EPlayer): Int {
@@ -68,7 +68,6 @@ fun GameState.isValidTarget(player: EPlayer, target: Loc): Boolean {
     val currentToBox = getBox(target)
     return currentToBox != player && (currentToBox == null || !isMagicBox(target))
 }
-
 
 fun GameState.introducePiece(player: EPlayer, loc: Loc): GameState {
     val oldBox = getBox(loc)
@@ -128,7 +127,7 @@ private fun GameState.isSet(index: Int): Boolean =
     this and (1L shl index) != 0L
 
 private fun GameState.setBox(player: EPlayer, loc: Loc) =
-    clearBox(loc) or ((if (player == EPlayer.A) 1L else 3L) shl ((loc.y * COLUMNS + loc.x) * 2))
+    clearBox(loc) or ((if (player == EPlayer.A) 1L else 2L) shl ((loc.y * COLUMNS + loc.x) * 2))
 
 private fun GameState.clearBox(loc: Loc) =
     this and (3L shl ((loc.y * COLUMNS + loc.x) * 2)).inv()
@@ -141,16 +140,16 @@ private fun getFinishedCounterOffset(player: EPlayer) =
 
 private fun GameState.increment(offset: Int) =
     this xor when {
-        !isSet(offset + 2) -> (1L shl (offset + 2))
-        !isSet(offset + 1) -> (3L shl (offset + 1))
+        !isSet(offset) -> (1L shl offset)
+        !isSet(offset + 1) -> (3L shl offset)
         else -> (7L shl offset)
     }
 
 
 private fun GameState.decrement(offset: Int) =
     this xor when {
-        isSet(offset + 2) -> (1L shl (offset + 2))
-        isSet(offset + 1) -> (3L shl (offset + 1))
+        isSet(offset) -> (1L shl offset)
+        isSet(offset + 1) -> (3L shl offset)
         else -> (7L shl offset)
     }
 
