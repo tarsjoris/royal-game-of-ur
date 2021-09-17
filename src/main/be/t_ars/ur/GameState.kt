@@ -1,15 +1,11 @@
-package be.t_ars.ur.player
-
-import be.t_ars.ur.Board
-import be.t_ars.ur.EPlayer
-import be.t_ars.ur.Loc
+package be.t_ars.ur
 
 const val COLUMNS = 8
 const val ROWS = 3
 private const val COUNTER_OFFSET = COLUMNS * ROWS * 2
 private const val COUNTER_BITS = 3
 
-const val INITIAL_GAME_STATE = 63L shl COUNTER_OFFSET // 2 times 3 bits set
+const val INITIAL_GAME_STATE: GameState = 63L shl COUNTER_OFFSET // 2 times 3 bits set
 
 typealias GameState = Long
 
@@ -19,31 +15,6 @@ fun isMagicBox(loc: Loc) =
 
 fun isValidBox(loc: Loc) =
     loc.y == 1 || (loc.x != 4 && loc.x != 5)
-
-fun createGameState(board: Board): GameState {
-    var gameState = INITIAL_GAME_STATE
-    for (y in board.state.indices) {
-        val row = board.state[y]
-        for (x in row.indices) {
-            val box = row[x]
-            if (box != null) {
-                gameState = gameState.setBox(box, Loc(x, y))
-            }
-        }
-    }
-    for (player in EPlayer.values()) {
-        val available = board.available[player.index]
-        val availableOffset = getUnusedCounterOffset(player)
-        gameState = gameState and (7L shl availableOffset).inv()
-        gameState = gameState or (available.toLong() shl availableOffset)
-
-        val finished = board.finished[player.index]
-        val finishedOffset = getFinishedCounterOffset(player)
-        gameState = gameState and (7L shl finishedOffset).inv()
-        gameState = gameState or (finished.toLong() shl finishedOffset)
-    }
-    return gameState
-}
 
 fun GameState.getBox(loc: Loc): EPlayer? {
     val offset = (loc.y * COLUMNS + loc.x) * 2

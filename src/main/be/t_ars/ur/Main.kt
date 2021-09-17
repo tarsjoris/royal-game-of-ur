@@ -1,8 +1,7 @@
 package be.t_ars.ur
 
 import be.t_ars.ur.player.DummyPlayer
-import be.t_ars.ur.player.MiniMaxPlayer
-import be.t_ars.ur.player.RandomPlayer
+import be.t_ars.ur.player.ExpectiMiniMaxPlayer
 import be.t_ars.ur.ui.MainFrame
 
 const val DELAY = 1000L
@@ -19,21 +18,26 @@ private fun playGameOnBoard(playerA: IPlayer, playerB: IPlayer) {
         }
     }
     while (board.winner == null) {
-        mainFrame.setDiceRoll(null, currentPlayer)
         Thread.sleep(DELAY)
         val stepCount = nextRoll()
-        println("Player ${currentPlayer.label} threw $stepCount")
+        //println("Player ${currentPlayer.label} threw $stepCount")
         mainFrame.setDiceRoll(stepCount, currentPlayer)
         ++throws[currentPlayer.index][stepCount]
         Thread.sleep(DELAY)
         val landedOnStar: Boolean
         if (stepCount != 0) {
-            val loc = players[currentPlayer.index].getNextMove(board, stepCount)
-            println("   and moved $loc")
+            val loc = players[currentPlayer.index].getNextMove(board.gameState, stepCount)
+            //println("   and moved $loc")
             landedOnStar = when (loc) {
-                Board.START_LOC -> board.introducePiece(currentPlayer, stepCount)
+                Board.START_LOC -> {
+                    println("board.introducePiece(EPlayer.${currentPlayer.label}, $stepCount)")
+                    board.introducePiece(currentPlayer, stepCount)
+                }
                 null -> board.skipTurn(currentPlayer, stepCount)
-                else -> board.movePiece(currentPlayer, loc, stepCount)
+                else -> {
+                    println("board.movePiece(EPlayer.${currentPlayer.label}, Loc(${loc.x}, ${loc.y}), $stepCount)")
+                    board.movePiece(currentPlayer, loc, stepCount)
+                }
             }
             mainFrame.update()
         } else {
@@ -42,6 +46,7 @@ private fun playGameOnBoard(playerA: IPlayer, playerB: IPlayer) {
         if (!landedOnStar) {
             currentPlayer = if (currentPlayer == EPlayer.A) EPlayer.B else EPlayer.A
         }
+        mainFrame.setDiceRoll(null, currentPlayer)
     }
 
     EPlayer.values()
@@ -56,8 +61,5 @@ private fun playGameOnBoard(playerA: IPlayer, playerB: IPlayer) {
 
 fun main() {
     //playGameOnBoard(RandomPlayer(EPlayer.A), DummyPlayer(EPlayer.B))
-    //playGameOnBoard(MiniMaxPlayer(EPlayer.A), DummyPlayer(EPlayer.B))
-
-    //testBestPlayer(RandomPlayer(EPlayer.A), DummyPlayer(EPlayer.B))
-    testBestPlayer(MiniMaxPlayer(EPlayer.A), DummyPlayer(EPlayer.B))
+    playGameOnBoard(ExpectiMiniMaxPlayer(EPlayer.A, 3), DummyPlayer(EPlayer.B))
 }

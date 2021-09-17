@@ -1,9 +1,6 @@
 package be.t_ars.ur.player
 
-import be.t_ars.ur.Board
-import be.t_ars.ur.EPlayer
-import be.t_ars.ur.Loc
-import org.junit.jupiter.api.Assertions
+import be.t_ars.ur.*
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 

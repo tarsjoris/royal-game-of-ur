@@ -1,8 +1,6 @@
 package be.t_ars.ur.ui
 
-import be.t_ars.ur.Board
-import be.t_ars.ur.EBox
-import be.t_ars.ur.EPlayer
+import be.t_ars.ur.*
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics
@@ -42,6 +40,8 @@ class BoardPanel(private val board: Board) : JPanel() {
                         val y1 = (yStep * y.toFloat()).roundToInt()
                         g.fillRect(x1, y1, xStep.roundToInt(), yStep.roundToInt())
                     }
+                    else -> {
+                    }
                 }
             }
         }
@@ -60,10 +60,9 @@ class BoardPanel(private val board: Board) : JPanel() {
         val bounds = g.font.getStringBounds("A", fontRenderContext)
         val xOffset = bounds.width.toFloat() * 0.5F
         val yOffset = bounds.height.toFloat() * 0.5F
-        for (y in board.state.indices) {
-            val row = board.state[y]
-            for (x in row.indices) {
-                val state = row[x]
+        for (y in 0 until Board.HEIGHT) {
+            for (x in 0 until Board.WIDTH) {
+                val state = board.gameState.getBox(Loc(x, y))
                 if (state != null) {
                     g.color = PLAYER_COLOR[state.index]
                     g.drawString(
@@ -75,12 +74,12 @@ class BoardPanel(private val board: Board) : JPanel() {
             }
         }
 
-        for (i in board.available.indices) {
-            val available = board.available[i]
+        for (player in EPlayer.values()) {
+            val available = board.gameState.getUnusedCount(player)
             if (available > 0) {
-                g.color = PLAYER_COLOR[i]
+                g.color = PLAYER_COLOR[player.index]
                 val x = 4
-                val y = if (i == 0) 0 else 2
+                val y = if (player == EPlayer.A) 0 else 2
                 g.drawString(
                     available.toString(),
                     (xStep * (x.toFloat() + 0.5F) - xOffset).roundToInt(),
@@ -88,12 +87,12 @@ class BoardPanel(private val board: Board) : JPanel() {
                 )
             }
         }
-        for (i in board.finished.indices) {
-            val finished = board.finished[i]
+        for (player in EPlayer.values()) {
+            val finished = board.gameState.getFinishedCount(player)
             if (finished > 0) {
-                g.color = PLAYER_COLOR[i]
+                g.color = PLAYER_COLOR[player.index]
                 val x = 5
-                val y = if (i == 0) 0 else 2
+                val y = if (player == EPlayer.A) 0 else 2
                 g.drawString(
                     finished.toString(),
                     (xStep * (x.toFloat() + 0.5F) - xOffset).roundToInt(),

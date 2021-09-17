@@ -1,8 +1,6 @@
 package be.t_ars.ur.player
 
-import be.t_ars.ur.Board
-import be.t_ars.ur.EPlayer
-import be.t_ars.ur.Loc
+import be.t_ars.ur.*
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
@@ -10,12 +8,12 @@ class MiniMaxTest {
     @Test
     fun testPreferFinish() {
         //given
-        val board = Board()
-        board.introducePiece(EPlayer.A, 4)
-        board.movePiece(EPlayer.A, Loc(0, 0), 4)
-        board.movePiece(EPlayer.A, Loc(3, 1), 4)
+        var gameState = INITIAL_GAME_STATE
+        gameState = gameState.introducePiece(EPlayer.A, Loc(0,0))
+        gameState = gameState.movePiece(EPlayer.A, Loc(0, 0), Loc(3, 1))
+        gameState = gameState.movePiece(EPlayer.A, Loc(3, 1), Loc(7, 1))
         // when
-        val nextMove = MiniMaxPlayer(EPlayer.A).getNextMove(board, 3)
+        val nextMove = ExpectiMiniMaxPlayer(EPlayer.A, 2).getNextMove(gameState, 3)
         // then
         assertEquals(Loc(7, 1), nextMove)
     }
@@ -23,13 +21,13 @@ class MiniMaxTest {
     @Test
     fun testBugSkipNotAllowed1() {
         // given
-        val board = Board()
-        board.introducePiece(EPlayer.A, 2)
-        board.introducePiece(EPlayer.A, 3)
-        board.introducePiece(EPlayer.B, 2)
-        board.introducePiece(EPlayer.B, 14)
+        var gameState = INITIAL_GAME_STATE
+        gameState = gameState.introducePiece(EPlayer.A, Loc(2, 0))
+        gameState = gameState.introducePiece(EPlayer.A, Loc(1, 0))
+        gameState = gameState.introducePiece(EPlayer.B, Loc(2, 0))
+        gameState = gameState.introducePiece(EPlayer.B, Loc(6, 2))
         // when
-        val nextMove = MiniMaxPlayer(EPlayer.A).getNextMove(board, 2)
+        val nextMove = ExpectiMiniMaxPlayer(EPlayer.A, 2).getNextMove(gameState, 2)
         // then
         assertEquals(Loc(2, 0), nextMove)
     }
@@ -37,11 +35,11 @@ class MiniMaxTest {
     @Test
     fun testBugSkipNotAllowed2() {
         // given
-        val board = Board()
-        board.introducePiece(EPlayer.A, 1)
-        board.introducePiece(EPlayer.B, 5)
+        var gameState = INITIAL_GAME_STATE
+        gameState = gameState.introducePiece(EPlayer.A, Loc(3, 0))
+        gameState = gameState.introducePiece(EPlayer.B, Loc(0, 1))
         // when
-        val nextMove = MiniMaxPlayer(EPlayer.A).getNextMove(board, 1)
+        val nextMove = ExpectiMiniMaxPlayer(EPlayer.A, 2).getNextMove(gameState, 1)
         // then
         assertEquals(Loc(3, 0), nextMove)
     }
@@ -49,12 +47,12 @@ class MiniMaxTest {
     @Test
     fun testBestMove1() {
         // given
-        val board = Board()
-        board.introducePiece(EPlayer.A, 2)
-        board.introducePiece(EPlayer.B, 3)
-        board.introducePiece(EPlayer.A, 4)
+        var gameState = INITIAL_GAME_STATE
+        gameState = gameState.introducePiece(EPlayer.A, Loc(2, 0))
+        gameState = gameState.introducePiece(EPlayer.B, Loc(1, 0))
+        gameState = gameState.introducePiece(EPlayer.A, Loc(0, 0))
         // when
-        val nextMove = MiniMaxPlayer(EPlayer.A).getNextMove(board, 3)
+        val nextMove = ExpectiMiniMaxPlayer(EPlayer.A, 2).getNextMove(gameState, 3)
         // then
         assertEquals(Board.START_LOC, nextMove)
         /*

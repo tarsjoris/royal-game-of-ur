@@ -40,31 +40,25 @@ fun nextRoll() =
 class InvalidMoveException(message: String) : Exception(message)
 
 class Board {
-    val state: Array<Array<EPlayer?>> = Array(3) {
-        Array(8) {
-            null
-        }
-    }
-    var available = arrayOf(PIECES, PIECES)
-    var finished = arrayOf(0, 0)
+    var gameState: GameState = INITIAL_GAME_STATE
     var winner: EPlayer? = null
 
     fun skipTurn(player: EPlayer, steps: Int): Boolean {
         val otherPlayer = player.otherPlayer()
         val path = PATHS[player.index]
-        if (available[player.index] > 0) {
+        if (gameState.getUnusedCount(player) > 0) {
             val toIndexInPath = steps - 1
             assert(toIndexInPath in path.indices)
             val toLoc = path[toIndexInPath]
-            if (state[toLoc.y][toLoc.x] == null) throw InvalidMoveException("Not allowed to skip because a new piece can be introduced")
+            if (gameState.getBox(toLoc) == null) throw InvalidMoveException("Not allowed to skip because a new piece can be introduced")
         }
         for (fromIndexInPath in path.indices) {
             val fromLoc = path[fromIndexInPath]
-            if (state[fromLoc.y][fromLoc.x] == player) {
+            if (gameState.getBox(fromLoc) == player) {
                 val toIndexInPath = fromIndexInPath + steps
                 if (toIndexInPath in path.indices) {
                     val toLoc = path[toIndexInPath]
-                    val toState = state[toLoc.y][toLoc.x]
+                    val toState = gameState.getBox(toLoc)
                     if (toState == null || (toState == otherPlayer && BOXES[toLoc.y][toLoc.x] != EBox.S))
                         throw InvalidMoveException("Not allowed to skip because the piece at $fromLoc can be moved")
                 }
@@ -74,16 +68,16 @@ class Board {
     }
 
     fun introducePiece(player: EPlayer, steps: Int): Boolean {
+        if (gameState.getUnusedCount(player) <= 0) throw InvalidMoveException("Can't introduce piece because player ${player.label} has no pieces left")
         val path = PATHS[player.index]
         val toIndexInPath = steps - 1
         assert(toIndexInPath in path.indices)
         val toLoc = path[toIndexInPath]
         val toBox = BOXES[toLoc.y][toLoc.x]
         assert(toBox != EBox.V)
-        if (state[toLoc.y][toLoc.x] != null) throw InvalidMoveException("Can't introduce piece at $toLoc because it is occupied by ${state[toLoc.y][toLoc.x]}")
+        if (gameState.getBox(toLoc) != null) throw InvalidMoveException("Can't introduce piece at $toLoc because it is occupied by ${gameState.getBox(toLoc)}")
 
-        --available[player.index]
-        state[toLoc.y][toLoc.x] = player
+        gameState = gameState.introducePiece(player, toLoc)
         return toBox == EBox.S
     }
 
@@ -98,8 +92,8 @@ class Board {
         }
         val fromIndexInPath = POS_IN_PATH[fromLoc.y][fromLoc.x]
             ?: throw InvalidMoveException("Can't move piece at $fromLoc because it is off the board")
-        if (state[fromLoc.y][fromLoc.x] != player) {
-            if (state[fromLoc.y][fromLoc.x] == null) {
+        if (gameState.getBox(fromLoc) != player) {
+            if (gameState.getBox(fromLoc) == null) {
                 throw InvalidMoveException("There is no piece to move at $fromLoc")
             } else {
                 throw InvalidMoveException("Can't move piece at $fromLoc because it belongs to the other player ($otherPlayer)")
@@ -112,8 +106,8 @@ class Board {
         val toIndexInPath = fromIndexInPath + steps
         if (toIndexInPath == path.size) {
             // finish
-            state[fromLoc.y][fromLoc.x] = null
-            if (++finished[player.index] == PIECES) {
+            gameState = gameState.finishPiece(player, fromLoc)
+            if (gameState.getFinishedCount(player) == PIECES) {
                 winner = player
             }
         } else {
@@ -122,17 +116,13 @@ class Board {
             val toLoc = path[toIndexInPath]
             val toBox = BOXES[toLoc.y][toLoc.x]
             assert(toBox != EBox.V)
-            val toState = state[toLoc.y][toLoc.x]
+            val toState = gameState.getBox(toLoc)
             if (toState == player)
                 throw InvalidMoveException("Can't move piece to $toLoc because it is occupied by the same player")
             if (toState == otherPlayer && toBox == EBox.S)
                 throw InvalidMoveException("Can't move piece to $toLoc because it is protected")
 
-            state[fromLoc.y][fromLoc.x] = null
-            if (toState == otherPlayer) {
-                ++available[otherPlayer.index]
-            }
-            state[toLoc.y][toLoc.x] = player
+            gameState = gameState.movePiece(player, fromLoc, toLoc)
             return toBox == EBox.S
         }
         return false

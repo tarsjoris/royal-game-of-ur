@@ -1,6 +1,9 @@
 package be.t_ars.ur
 
-private const val NUMBER_OF_GAMES = 10000
+import be.t_ars.ur.player.DummyPlayer
+import be.t_ars.ur.player.ExpectiMiniMaxPlayer
+
+private const val NUMBER_OF_GAMES = 100
 
 fun testBestPlayer(playerA: IPlayer, playerB: IPlayer): EPlayer {
     val wins = Array(2) { 0 }
@@ -24,7 +27,7 @@ private fun runGame(playerA: IPlayer, playerB: IPlayer): EPlayer {
         val stepCount = nextRoll()
         val landedOnStar: Boolean
         if (stepCount != 0) {
-            val loc = players[currentPlayer.index].getNextMove(board, stepCount)
+            val loc = players[currentPlayer.index].getNextMove(board.gameState, stepCount)
             landedOnStar = when (loc) {
                 Board.START_LOC -> board.introducePiece(currentPlayer, stepCount)
                 null -> false
@@ -39,4 +42,10 @@ private fun runGame(playerA: IPlayer, playerB: IPlayer): EPlayer {
         winner = board.winner
     }
     return winner
+}
+
+fun main() {
+    //testBestPlayer(RandomPlayer(EPlayer.A), DummyPlayer(EPlayer.B))
+    testBestPlayer(ExpectiMiniMaxPlayer(EPlayer.A, 3), DummyPlayer(EPlayer.B))
+    //testBestPlayer(ExpectiMiniMaxPlayerWeights(EPlayer.A, 2), ExpectiMiniMaxPlayer(EPlayer.B, 2))
 }
